@@ -2,7 +2,7 @@
 
 This file is the durable reference for Module 1.
 
-The notebooks contain the executable experiments, saved measurements, plots, and detailed result interpretations:
+The notebooks contain the executable experiments, plots, measured results, and detailed interpretations:
 
 - [Manual linear regression](01_manual_linear_regression.ipynb) — tensors, gradients, updates, optimizer behavior, and controlled failure cases.
 - [Validation and overfitting](02_train_validation_overfitting.ipynb) — generalization, checkpoints, regularization, early stopping, and model capacity.
@@ -11,7 +11,7 @@ The notebooks contain the executable experiments, saved measurements, plots, and
 
 ## What This Module Establishes
 
-The core training loop of modern machine learning is:
+The core training loop is:
 
 ```text
 data
@@ -29,9 +29,7 @@ parameter update
 repeat
 ```
 
-Even when the model later becomes a Transformer with billions of parameters, this basic structure remains recognizable.
-
-Module 1 builds the intuition needed to understand:
+Module 1 builds the intuition behind:
 
 ```text
 tensor
@@ -47,7 +45,7 @@ tensor
 → regularization
 ```
 
-The main principle is:
+The guiding principle is:
 
 > **Understand the mechanics before relying on abstractions.**
 
@@ -55,16 +53,7 @@ The main principle is:
 
 # Tensor Fundamentals
 
-A **tensor** is an n-dimensional numerical array.
-
-Examples:
-
-```text
-scalar       → 0-dimensional tensor
-vector       → 1-dimensional tensor
-matrix       → 2-dimensional tensor
-higher array → n-dimensional tensor
-```
+A tensor is an n-dimensional numerical array.
 
 A useful mental model is:
 
@@ -77,22 +66,22 @@ Tensor
 └── autograd metadata
 ```
 
-PyTorch tensors are useful because they support:
+PyTorch tensors support:
 
 - vectorized numerical operations
 - matrix multiplication
-- accelerator execution
-- automatic differentiation
 - broadcasting
+- accelerator execution
 - multiple numeric precisions
+- automatic differentiation
 
 ---
 
-## Common Tensor Creation Functions
+## Common Tensor Creation
 
 ### `torch.randn`
 
-Creates random values sampled from a standard normal distribution.
+Creates values sampled from a standard normal distribution.
 
 ```python
 w = torch.randn(1, 1)
@@ -105,14 +94,6 @@ rand → random
 n    → normal distribution
 ```
 
-Possible result:
-
-```text
-tensor([[-0.5672]])
-```
-
-Values can be positive or negative and are centered around zero.
-
 ---
 
 ### `torch.zeros`
@@ -123,15 +104,7 @@ Creates a tensor filled with zeros.
 b = torch.zeros(1)
 ```
 
-Result:
-
-```text
-tensor([0.])
-```
-
-Initialization and gradient tracking are separate concepts.
-
-For example:
+Initialization and gradient tracking are separate concepts:
 
 ```python
 b = torch.zeros(
@@ -163,40 +136,28 @@ A strong debugging rule is:
 
 > **Never inspect a tensor shape without asking what every dimension means.**
 
-For example:
+Example:
 
 ```text
 [100, 1]
-```
-
-might mean:
-
-```text
-100 examples
-1 feature per example
+→ 100 examples
+→ 1 feature per example
 ```
 
 Later:
 
 ```text
 [8, 512, 768]
+→ batch
+→ token positions
+→ hidden features
 ```
-
-might mean:
-
-```text
-8 sequences
-512 token positions
-768 hidden features per token
-```
-
-The numbers alone do not define the semantics.
 
 ---
 
 ## Shape Reasoning
 
-For manual linear regression:
+For linear regression:
 
 | Tensor | Role | Shape | Gradient role |
 |---|---|---|---|
@@ -207,43 +168,22 @@ For manual linear regression:
 | `y_pred` | Predictions | `[N, 1]` | Derived through graph |
 | `loss` | Objective | `[]` | Scalar derived through graph |
 
-The forward computation:
+For:
 
 ```python
 y_pred = x @ w + b
 ```
 
-uses:
+the multiplication is:
 
 ```text
 [N, 1] @ [1, 1]
 → [N, 1]
 ```
 
-and then broadcasts:
+and the bias is broadcast across rows.
 
-```text
-b: [1]
-```
-
-across all `N` rows.
-
----
-
-## Broadcasting
-
-Broadcasting allows PyTorch to apply compatible smaller tensors across larger tensors.
-
-Example:
-
-```text
-prediction: [100, 1]
-bias:       [1]
-```
-
-The same bias value is added to each row.
-
-Broadcasting is convenient, but it can also hide bugs.
+Broadcasting is useful but can hide bugs.
 
 For example:
 
@@ -257,9 +197,7 @@ can produce:
 [N, N]
 ```
 
-rather than one error per example.
-
-Always compare prediction and target shapes explicitly.
+instead of one error per example.
 
 ---
 
@@ -277,8 +215,6 @@ Elementwise multiplication:
 x * w
 ```
 
-These are different operations.
-
 For matrix multiplication, inner dimensions must match:
 
 ```text
@@ -286,23 +222,11 @@ For matrix multiplication, inner dimensions must match:
 → [32, 256]
 ```
 
-but:
-
-```text
-[32, 128] @ [64, 256]
-```
-
-is invalid because:
-
-```text
-128 != 64
-```
-
 ---
 
 ## dtype
 
-Common PyTorch dtypes include:
+Common dtypes:
 
 ```text
 float32
@@ -336,25 +260,9 @@ Precision affects:
 
 ```text
 memory
-training speed
+speed
 numerical stability
 hardware compatibility
-```
-
-For intuition:
-
-```text
-1 billion parameters
-× 4 bytes per FP32 parameter
-≈ 4 GB
-```
-
-and that is before:
-
-```text
-gradients
-optimizer state
-activations
 ```
 
 ---
@@ -369,25 +277,13 @@ mps
 cuda
 ```
 
-Move a tensor using:
+Move a tensor with:
 
 ```python
 x = x.to(device)
 ```
 
-Important:
-
-```python
-x.to(device)
-```
-
-returns a tensor.
-
-Use the returned value.
-
-Tensors participating in one operation generally need compatible dtypes and to live on the same device.
-
-The Module 1 experiments intentionally use CPU tensors even though the environment supports MPS.
+Tensors participating in one computation generally need compatible dtypes and the same device.
 
 ---
 
@@ -398,10 +294,8 @@ A **parameter** is learned from data.
 Examples:
 
 ```text
-w
-b
-neural-network weights
-neural-network biases
+weights
+biases
 ```
 
 A **hyperparameter** is chosen by us.
@@ -410,11 +304,11 @@ Examples:
 
 ```text
 learning rate
-number of epochs
+epochs
 momentum
 weight decay
-model size
 batch size
+model size
 early-stopping patience
 ```
 
@@ -425,7 +319,7 @@ parameter
 → learned during training
 
 hyperparameter
-→ configures how training happens
+→ configures training
 ```
 
 ---
@@ -456,18 +350,6 @@ w.requires_grad = True
 b.requires_grad = True
 ```
 
-Why?
-
-```text
-x, y
-→ observed data
-→ not being optimized
-
-w, b
-→ learnable parameters
-→ should receive gradients
-```
-
 Important distinction:
 
 ```text
@@ -475,13 +357,11 @@ requires_grad=True
 → track operations
 
 loss.backward()
-→ actually compute gradients
+→ compute gradients
 
 optimizer.step()
-→ actually modify parameters
+→ modify parameters
 ```
-
-`requires_grad=True` does not update anything by itself.
 
 ---
 
@@ -498,9 +378,7 @@ PyTorch tracks the dependency structure:
 
 ```text
 w ──────┐
-        │
         ├──> y_pred ───> loss
-        │
 b ──────┘
 ```
 
@@ -510,9 +388,7 @@ Then:
 loss.backward()
 ```
 
-traverses that graph backward using the chain rule.
-
-PyTorch computes:
+uses the chain rule to compute:
 
 $$
 \frac{\partial L}{\partial w}
@@ -531,53 +407,19 @@ w.grad
 b.grad
 ```
 
----
+Parameters such as `w` and `b` are typically leaf tensors.
 
-## Leaf vs Derived Tensors
-
-Parameters such as:
-
-```python
-w
-b
-```
-
-are typically **leaf tensors**.
-
-Derived tensors such as:
-
-```text
-y_pred
-loss
-```
-
-participate in the graph but are not parameters.
-
-A tensor can have:
-
-```text
-requires_grad = True
-```
-
-without itself being something the optimizer updates.
+Derived tensors such as `y_pred` and `loss` participate in the graph but are not themselves model parameters.
 
 ---
 
 # Linear Regression Model
 
-The synthetic dataset follows approximately:
+The synthetic relationship is approximately:
 
 $$
 y = 3x + 2 + \epsilon
 $$
-
-where:
-
-```text
-3 → true slope
-2 → true intercept
-ε → noise
-```
 
 The model is:
 
@@ -592,7 +434,7 @@ w → weight / slope
 b → bias / intercept
 ```
 
-The weight controls the line's tilt.
+The weight controls the tilt of the line.
 
 The bias controls its vertical position.
 
@@ -608,13 +450,11 @@ $$
 \hat{y} = b
 $$
 
-which is why `b` corresponds to the intercept.
-
 ---
 
 # Loss
 
-The Module 1 regression experiments use Mean Squared Error:
+The regression experiments use Mean Squared Error:
 
 $$
 L
@@ -624,12 +464,12 @@ L
 (\hat{y}_i-y_i)^2
 $$
 
-Why square the errors?
+Squaring errors:
 
 ```text
-positive and negative errors cannot cancel
+prevents positive and negative errors from canceling
 +
-large errors receive stronger penalties
+penalizes larger errors more strongly
 ```
 
 The loss is a scalar:
@@ -638,13 +478,9 @@ The loss is a scalar:
 shape = []
 ```
 
-A loss tells us how wrong the model is under a particular objective.
-
-It does not directly tell us the correct parameter values.
-
 ---
 
-# Manual Gradient Derivation
+# Manual Gradients
 
 For:
 
@@ -662,7 +498,7 @@ L
 (\hat{y}_i-y_i)^2
 $$
 
-the gradient with respect to the weight is:
+the gradients are:
 
 $$
 \frac{\partial L}{\partial w}
@@ -672,7 +508,7 @@ $$
 (\hat{y}_i-y_i)x_i
 $$
 
-and with respect to the bias:
+and:
 
 $$
 \frac{\partial L}{\partial b}
@@ -682,55 +518,43 @@ $$
 (\hat{y}_i-y_i)
 $$
 
-The manual gradients matched PyTorch autograd to floating-point precision.
+The notebook verifies that the manual gradients match PyTorch autograd to floating-point precision.
 
-This demonstrates that:
-
-```python
-loss.backward()
-```
-
-is automating the same calculus.
+Autograd automates the calculus; it does not change the underlying mathematics.
 
 ---
 
 # What a Gradient Means
 
-A gradient is a **local sensitivity**.
+A gradient is a local sensitivity.
 
 It answers:
 
 > If this parameter changes slightly, how does the loss change?
 
-Suppose:
+If:
 
 ```text
-w.grad < 0
+gradient < 0
 ```
 
-Then increasing `w` locally reduces the loss.
+increasing the parameter locally reduces the loss.
 
-Suppose:
+If:
 
 ```text
-w.grad > 0
+gradient > 0
 ```
 
-Then decreasing `w` locally reduces the loss.
+decreasing the parameter locally reduces the loss.
 
-The gradient does not say:
-
-```text
-set w = 3
-```
-
-It only provides local information about the loss surface.
+The gradient does not directly tell us the final correct parameter value.
 
 ---
 
 # Gradient Descent
 
-Gradient descent updates a parameter using:
+Gradient descent updates parameters using:
 
 $$
 \theta_{t+1}
@@ -749,24 +573,6 @@ where:
 ∇L → gradient
 ```
 
-A negative gradient causes the parameter to increase because:
-
-```text
-parameter
--
-negative number
-=
-parameter increase
-```
-
-A positive gradient causes the parameter to decrease.
-
----
-
-# Learning Rate
-
-The learning rate controls update size.
-
 Conceptually:
 
 ```text
@@ -774,63 +580,42 @@ gradient
 → direction + local steepness
 
 learning rate
-→ how far we move
+→ step size
 ```
 
-Observed behavior:
+---
+
+# Learning Rate
+
+Typical behavior:
 
 ```text
-very small learning rate
-→ correct direction
+too small
 → slow convergence
 
-reasonable learning rate
+reasonable
 → stable convergence
 
-very large learning rate
+too large
 → overshooting
 → divergence
 ```
 
-A large learning rate can cause:
+The learning rate is not a property of the model alone.
+
+It interacts with:
 
 ```text
-overshoot
-↓
-larger gradient
-↓
-larger update
-↓
-more overshoot
-↓
-numerical explosion
+optimizer
+momentum
+model architecture
+gradient scale
+batch size
 ```
-
-Optimizer behavior always depends on its hyperparameters.
 
 ---
 
-# Training Loop Mental Model
-
-The canonical loop is:
-
-```text
-forward
-↓
-loss
-↓
-backward
-↓
-gradient
-↓
-update
-↓
-clear gradients
-↓
-repeat
-```
-
-Equivalent PyTorch code:
+# Canonical Training Loop
 
 ```python
 for epoch in range(epochs):
@@ -843,7 +628,7 @@ for epoch in range(epochs):
     optimizer.step()
 ```
 
-Line by line:
+Interpretation:
 
 ```text
 optimizer.zero_grad()
@@ -853,7 +638,7 @@ model(x_train)
 → forward pass
 
 loss_fn(...)
-→ compute scalar objective
+→ compute objective
 
 loss.backward()
 → compute gradients
@@ -864,26 +649,22 @@ optimizer.step()
 
 ---
 
-# Epoch, Batch, and Full-Batch Training
+# Epochs and Batches
 
 An **epoch** is one complete pass through the training dataset.
 
-In the early regression experiments:
+The early Module 1 experiments use full batches:
 
 ```text
 all training examples
 → one forward pass
 → one backward pass
-→ one update
+→ one parameter update
 ```
-
-so each epoch contains one full-batch update.
 
 Later, with mini-batches:
 
 ```text
-dataset
-↓
 batch 1 → update
 batch 2 → update
 batch 3 → update
@@ -894,62 +675,27 @@ all examples seen once
 1 epoch
 ```
 
-The Module 1 experiments use full batches.
-
 ---
 
 # Gradient Clearing and Accumulation
 
 PyTorch accumulates gradients by default.
 
-Suppose:
-
-```text
-backward #1 → g1
-backward #2 → g2
-backward #3 → g3
-```
-
 Without clearing:
 
 ```text
-after #1 → g1
-after #2 → g1 + g2
-after #3 → g1 + g2 + g3
+backward #1 → g1
+backward #2 → g1 + g2
+backward #3 → g1 + g2 + g3
 ```
 
-For ordinary training, we therefore use:
+For ordinary training:
 
 ```python
 optimizer.zero_grad()
 ```
 
-or manually:
-
-```python
-w.grad.zero_()
-b.grad.zero_()
-```
-
----
-
-## Why accidental accumulation is a problem
-
-A gradient describes the loss surface at a particular parameter state.
-
-Old gradients were computed using older model parameters.
-
-If they remain in `.grad`, future updates no longer correspond to ordinary gradient descent.
-
-Observed behavior:
-
-```text
-clear gradients
-→ smooth convergence
-
-do not clear gradients
-→ oscillation / instability
-```
+clears old gradients before the next backward pass.
 
 ---
 
@@ -957,7 +703,7 @@ do not clear gradients
 
 Gradient accumulation can also be deliberate.
 
-For example:
+Example:
 
 ```text
 microbatch 1
@@ -968,7 +714,7 @@ microbatch 4
 one optimizer update
 ```
 
-This is useful when hardware cannot fit the desired effective batch size.
+This is useful when memory limits prevent using the desired batch size directly.
 
 Important distinction:
 
@@ -984,7 +730,7 @@ controlled accumulation
 
 # Manual Updates and `torch.no_grad()`
 
-A manual parameter update:
+Manual updates use:
 
 ```python
 with torch.no_grad():
@@ -992,43 +738,17 @@ with torch.no_grad():
     b -= learning_rate * b.grad
 ```
 
-uses `torch.no_grad()` because the parameter update itself should not become part of the differentiable computation graph.
+because the update itself should not become part of the differentiable graph.
 
-We want to differentiate:
-
-```text
-prediction
-→ loss
-```
-
-not:
-
-```text
-previous parameter update
-→ current parameter update
-→ future parameter update
-```
-
-After parameters change, recompute predictions if you want to measure the new loss.
+After updating parameters, recompute predictions if you want to measure the new loss.
 
 ---
 
-# `nn.Module`
+# PyTorch Model Abstractions
 
-Instead of manually managing:
+## `nn.Module`
 
-```python
-w
-b
-```
-
-PyTorch models usually subclass or compose:
-
-```python
-nn.Module
-```
-
-An `nn.Module` organizes:
+`nn.Module` organizes:
 
 ```text
 parameters
@@ -1037,149 +757,79 @@ forward computation
 nested components
 ```
 
-For linear regression:
-
-```python
-model = nn.Linear(1, 1)
-```
-
-replaces the manually managed affine transformation.
-
 ---
 
-# `nn.Linear`
+## `nn.Linear`
 
-`nn.Linear(in_features, out_features)` computes:
+```python
+nn.Linear(in_features, out_features)
+```
+
+computes:
 
 $$
 y = xW^T+b
 $$
 
-The stored weight shape is:
+and stores weights as:
 
 ```text
 [out_features, in_features]
 ```
 
-For:
-
-```python
-nn.Linear(1, 1)
-```
-
-the parameter shapes are:
-
-```text
-weight → [1, 1]
-bias   → [1]
-```
-
-This storage convention differs from some manually defined matrices shaped:
-
-```text
-[in_features, out_features]
-```
-
-so always inspect shapes.
+Always inspect shapes rather than assuming layout.
 
 ---
 
-# `nn.MSELoss`
-
-PyTorch provides:
+## `nn.MSELoss`
 
 ```python
 loss_fn = nn.MSELoss()
 ```
 
-which by default computes the mean squared error.
-
-For the Module 1 experiment:
-
-```python
-loss_fn(y_pred, y)
-```
-
-matched:
-
-```python
-((y_pred - y) ** 2).mean()
-```
+matches the manual mean-squared-error objective used in the notebook.
 
 ---
 
-# Optimizer Abstraction
+## Optimizers
 
-Before optimizers:
+Manual update:
 
 ```python
 with torch.no_grad():
     w -= learning_rate * w.grad
-    b -= learning_rate * b.grad
 ```
 
-With PyTorch:
+Optimizer abstraction:
 
 ```python
 optimizer.step()
 ```
 
-The optimizer:
+The optimizer does not compute gradients.
 
-```text
-does not compute gradients
-```
+`loss.backward()` computes gradients.
 
-It reads gradients already produced by:
-
-```python
-loss.backward()
-```
-
-and applies its update rule.
+`optimizer.step()` uses them.
 
 ---
 
 # Optimizer Concepts
 
-| Optimizer | Update information | Practical implication |
+| Optimizer | Main idea | Practical implication |
 |---|---|---|
-| SGD | Current gradient | Simple, direct baseline |
-| SGD + momentum | Current gradient + decaying velocity | Can accelerate and overshoot |
-| Adam | Running first and second moments | Adaptive parameter-wise updates |
+| SGD | Uses current gradient directly | Simple baseline |
+| SGD + momentum | Adds decaying velocity | Can accelerate or overshoot |
+| Adam | Uses first and second gradient moments | Adaptive per-parameter updates |
 | AdamW | Adam-style adaptation + decoupled weight decay | Common in Transformer training |
 
----
+There is no universal optimizer ranking.
 
-# SGD
-
-Basic SGD performs:
-
-$$
-\theta_{t+1}
-=
-\theta_t
--
-\eta g_t
-$$
-
-where:
-
-```text
-g_t → current gradient
-```
-
-On the simple convex regression problem, SGD performed extremely well.
-
-Important lesson:
-
-> A more sophisticated optimizer is not automatically better on every problem.
+Equal nominal learning rates do not imply equally suitable behavior across optimizers.
 
 ---
 
 # Momentum
-
-Momentum adds optimizer state.
 
 A simplified form is:
 
@@ -1201,130 +851,38 @@ $$
 \eta v_t
 $$
 
-where:
+Momentum adds controlled memory of recent gradients.
 
-```text
-v_t → velocity
-β   → momentum coefficient
-```
+It can:
 
-Conceptually:
-
-```text
-current gradient
-+
-previous velocity
-↓
-new velocity
-↓
-parameter update
-```
-
-Momentum can:
-
-- accelerate movement in consistent directions
-- reduce noisy zig-zagging
+- accelerate persistent directions
+- smooth noisy updates
 - overshoot minima
 - interact strongly with learning rate
 
-Observed behavior in Module 1:
+Momentum is different from uncleared gradients.
 
-```text
-SGD without momentum
-→ smooth convergence
-
-momentum = 0.9 with same learning rate
-→ faster early movement
-→ overshoot
-→ oscillation
-```
-
-Momentum is not guaranteed to improve every setup.
+Momentum uses decaying optimizer state; accidental accumulation directly adds gradients into `.grad`.
 
 ---
 
-# Momentum vs Gradient Accumulation
-
-Accidental accumulation:
-
-```text
-g1
-g1 + g2
-g1 + g2 + g3
-```
-
-Momentum:
-
-```text
-recent gradients
-→ strong influence
-
-older gradients
-→ progressively decaying influence
-```
-
-Momentum is controlled optimizer state.
-
-Gradient accumulation is direct addition into `.grad`.
-
-They are different mechanisms.
-
----
-
-# Adam
+# Adam and AdamW
 
 Adam tracks running estimates of:
 
 ```text
 first moment
-→ roughly gradient direction history
+→ gradient direction history
 
 second moment
-→ roughly squared gradient magnitude history
+→ squared gradient magnitude history
 ```
 
-Conceptually:
+This produces adaptive parameter updates.
 
-```text
-gradient
-↓
-track direction history
-+
-track magnitude history
-↓
-adaptive parameter update
-```
+AdamW combines Adam-style adaptation with decoupled weight decay.
 
-Adam is useful when:
-
-- parameter gradients have different scales
-- optimization is noisy
-- models are large
-- gradients are irregular
-
-Its learning-rate scale is not directly comparable to SGD.
-
----
-
-# AdamW
-
-AdamW combines Adam-style adaptive optimization with **decoupled weight decay**.
-
-Conceptually:
-
-```text
-adaptive gradient update
-+
-parameter shrinkage
-```
-
-AdamW is commonly used for Transformer and LLM training.
-
-Important nuance:
-
-AdamW's weight decay is not identical to simply adding an L2 penalty to the loss and passing that derivative through Adam.
-
-The Module 1 optimizer comparison also used AdamW's default nonzero weight decay, so the comparison was not purely optimizer-state-only.
+AdamW is commonly used in Transformer and LLM training.
 
 ---
 
@@ -1336,60 +894,41 @@ Training data is used for:
 forward pass
 loss
 backward pass
-parameter update
+parameter updates
 ```
 
 Validation data is used for:
 
 ```text
-evaluation only
+evaluation
+model selection
+hyperparameter decisions
 ```
 
-Validation data should not supply gradients used to update parameters.
-
-Conceptually:
-
-```text
-training set
-→ learn parameters
-
-validation set
-→ measure generalization
-```
+Validation data should not supply gradients used for training updates.
 
 ---
 
-## Why Shuffle Before Splitting?
+## Splitting Data
 
-The synthetic inputs were sorted.
+The synthetic inputs were shuffled before splitting so both subsets covered the full input range.
 
-If we had used:
-
-```text
-first 80% → training
-last 20% → validation
-```
-
-the two sets would cover different regions of the input space.
-
-Random shuffling produced representative subsets from the same distribution.
-
-But random splitting is not universally correct.
+Random splitting is not always correct.
 
 Examples:
 
 ```text
-time series
-→ preserve temporal ordering
+time-series data
+→ preserve time ordering
 
 user-based data
-→ split by user when appropriate
+→ often split by user
 
-documents from same source
-→ grouped split may prevent leakage
+related documents
+→ grouped splitting may prevent leakage
 ```
 
-The split should reflect the intended deployment problem.
+The split should reflect the actual deployment problem.
 
 ---
 
@@ -1397,7 +936,7 @@ The split should reflect the intended deployment problem.
 
 Generalization means:
 
-> The model performs usefully on examples it did not train on.
+> The model performs usefully on data it did not train on.
 
 Training loss answers:
 
@@ -1407,13 +946,13 @@ Validation loss answers:
 
 > How well does the learned behavior transfer to unseen examples?
 
-The goal of machine learning is generally not:
+The real objective is generally not:
 
 ```text
 minimize training loss at any cost
 ```
 
-It is closer to:
+but:
 
 ```text
 learn useful patterns
@@ -1429,22 +968,20 @@ The difference between training and validation performance is often called the *
 
 A gap alone does not prove overfitting.
 
-Consider:
+Look at:
 
 ```text
 noise
-sample difficulty
 dataset size
+sample difficulty
 curve behavior over time
 ```
 
-The strongest overfitting signal is usually:
+A classic overfitting signal is:
 
 ```text
 training loss continues decreasing
-
 while
-
 validation loss stops improving or increases
 ```
 
@@ -1452,39 +989,29 @@ validation loss stops improving or increases
 
 # Overfitting
 
-Overfitting occurs when a model increasingly specializes to the training data while generalization worsens.
+Overfitting occurs when the model increasingly specializes to the training set while unseen performance worsens.
 
 Typical pattern:
 
 ```text
 early training
-→ learn useful signal
+→ learn signal
 
 later training
-→ increasingly fit noise / sample-specific details
+→ fit noise and sample-specific details
 
 training loss
-→ continues decreasing
+→ decreases
 
 validation loss
 → stops improving or rises
 ```
 
-In the deliberate overfitting experiment:
-
-```text
-training loss became nearly zero
-while
-validation loss remained much larger
-```
-
-The best validation model occurred very early compared with the final training epoch.
-
 ---
 
 # Underfitting
 
-Underfitting occurs when the model is too limited or insufficiently optimized to capture the underlying structure.
+Underfitting occurs when the model cannot adequately capture the underlying structure.
 
 Typical pattern:
 
@@ -1493,42 +1020,35 @@ training loss high
 validation loss high
 ```
 
-Possible causes include:
+Possible causes:
 
 ```text
-too little model capacity
+too little capacity
 insufficient training
 poor optimization
-excessive regularization
+too much regularization
 ```
 
 ---
 
 # Model Capacity
 
-Model capacity describes how flexible a model is.
+Capacity describes how flexible a model is.
 
-Observed Module 1 behavior:
+Observed pattern:
 
 ```text
-small model
-→ too little capacity
+too little capacity
 → underfitting
 
-medium model
-→ enough capacity
-→ best validation performance
+appropriate capacity
+→ best generalization
 
-large model
-→ near-zero training loss
-→ stronger overfitting
+too much capacity
+→ stronger overfitting risk
 ```
 
-The model with the lowest training loss was not the model with the best validation performance.
-
-Important lesson:
-
-> The best model is not necessarily the largest model.
+The model with the lowest training loss is not necessarily the best model.
 
 ---
 
@@ -1537,18 +1057,16 @@ Important lesson:
 Very roughly:
 
 ```text
-low-capacity model
+lower-capacity model
 → higher bias
 → lower flexibility
 
-high-capacity model
+higher-capacity model
 → lower bias
 → potentially higher variance
 ```
 
-Too little flexibility can miss real structure.
-
-Too much flexibility can make the model sensitive to a small training sample.
+The goal is not to minimize either independently.
 
 The goal is a balance that generalizes well.
 
@@ -1556,9 +1074,7 @@ The goal is a balance that generalizes well.
 
 # Early Stopping
 
-Early stopping monitors validation performance during training.
-
-Conceptually:
+Early stopping monitors validation performance.
 
 ```text
 train
@@ -1584,78 +1100,53 @@ last checkpoint
 best checkpoint
 ```
 
-In the Module 1 experiment, the best validation checkpoint occurred much earlier than the stopping epoch.
-
 ---
 
 ## Patience
 
-Patience controls how long training may continue without improvement.
+Patience controls how many non-improving validation steps are allowed before stopping.
 
-Example:
+Too little patience may stop training too early.
 
-```text
-patience = 50
-```
-
-means:
-
-> Stop after 50 consecutive epochs without validation improvement.
-
-Too little patience can stop training prematurely.
-
-Too much patience can waste compute.
+Too much patience may waste compute.
 
 ---
 
 ## Saving the Best Checkpoint
 
-Use:
+For an in-memory snapshot:
 
 ```python
-copy.deepcopy(model.state_dict())
+best_model_state = copy.deepcopy(
+    model.state_dict()
+)
 ```
 
-to make an in-memory copy.
-
-Keeping references to live tensors can allow later updates to overwrite the intended checkpoint.
-
-After stopping:
+Restore it with:
 
 ```python
 model.load_state_dict(best_model_state)
 ```
 
-restores the best model.
-
 ---
 
 # `model.train()` vs `model.eval()` vs `torch.no_grad()`
 
-These are different concepts.
+These solve different problems.
 
 ### `model.train()`
 
 Enables training behavior for mode-dependent layers.
 
-Examples:
-
-```text
-dropout
-batch normalization
-```
-
 ### `model.eval()`
 
 Enables evaluation behavior for mode-dependent layers.
-
-It does **not** disable gradient tracking.
 
 ### `torch.no_grad()`
 
 Disables autograd graph construction.
 
-Typical validation pattern:
+Typical validation:
 
 ```python
 model.eval()
@@ -1664,78 +1155,43 @@ with torch.no_grad():
     val_pred = model(x_val)
 ```
 
+`model.eval()` alone does not disable gradients.
+
 ---
 
 # Weight Decay
 
 Weight decay discourages large parameter values.
 
-A simplified regularized objective is often described as:
-
-$$
-L_{\text{total}}
-=
-L_{\text{data}}
-+
-\lambda \lVert W \rVert^2
-$$
-
-where:
-
-```text
-λ → regularization strength
-```
-
 Conceptually:
 
 ```text
 fit the data
 +
-discourage unnecessarily large parameters
+discourage unnecessary parameter growth
 ```
 
-Observed Module 1 behavior:
+It can reduce aggressive memorization, but it does not automatically improve validation performance.
 
-```text
-more weight decay
-→ higher training loss
-→ less aggressive memorization
-→ only small validation improvement
-```
-
-Weight decay did not eliminate overfitting.
-
-Regularization is not guaranteed to improve every experiment.
+Regularization strength is another hyperparameter that must be evaluated empirically.
 
 ---
 
 # Early Stopping vs Weight Decay
 
-These address overfitting differently.
-
 Early stopping:
 
 ```text
-controls how long training continues
+controls training duration
 ```
 
 Weight decay:
 
 ```text
-changes how freely parameters can grow
+constrains parameter growth
 ```
 
-So:
-
-```text
-early stopping
-→ temporal regularization
-
-weight decay
-→ parameter regularization
-```
-
-They can be used together.
+They address overfitting through different mechanisms and can be used together.
 
 ---
 
@@ -1745,7 +1201,7 @@ They can be used together.
 
 ```text
 too small
-→ slow convergence
+→ slow
 
 reasonable
 → stable convergence
@@ -1754,120 +1210,67 @@ too large
 → divergence
 ```
 
----
-
 ## Gradient Clearing
 
 ```text
-clear every step
-→ intended gradient descent
+clear gradients
+→ intended update rule
 
 forget to clear
-→ gradients accumulate
-→ optimization changes
+→ accumulated gradients
+→ changed optimization behavior
 ```
 
----
-
-## Manual vs Autograd
+## Autograd
 
 ```text
-manual derivative
+manual gradients
 ≈
-PyTorch autograd derivative
+PyTorch gradients
 ```
 
-Autograd automates calculus; it does not replace the underlying mathematics.
-
----
-
-## `nn.Module` and Optimizers
-
-The abstractions did not change the core training mechanics.
+## PyTorch Abstractions
 
 ```text
-manual w, b
+manual parameters
 → model.parameters()
 
-x @ w + b
-→ model(x)
+manual forward equation
+→ model(...)
 
 manual MSE
 → nn.MSELoss()
 
-manual parameter update
+manual update
 → optimizer.step()
 
 manual gradient clearing
 → optimizer.zero_grad()
 ```
 
----
-
 ## Optimizers
 
 ```text
 SGD
-→ simple and effective on the toy problem
+→ simple baseline
+
+momentum
+→ adds controlled history
 
 Adam
-→ adaptive gradient-history-based updates
+→ adaptive updates
 
 AdamW
-→ Adam-style updates + decoupled weight decay
-
-Momentum
-→ adds controlled velocity
-→ can accelerate
-→ can overshoot
+→ Adam-style adaptation + decoupled weight decay
 ```
-
-There is no universal optimizer ranking.
-
----
 
 ## Generalization
 
 ```text
-low training loss
+lowest training loss
 ≠
-automatically good model
+best model
 ```
-
-Validation performance matters.
-
----
-
-## Overfitting
-
-```text
-training loss ↓
-validation loss ↑
-```
-
-is a classic warning pattern.
-
----
-
-## Early Stopping
-
-```text
-best checkpoint
-may occur long before
-final epoch
-```
-
----
-
-## Weight Decay
-
-```text
-reduced training fit
-but
-did not automatically solve overfitting
-```
-
----
 
 ## Capacity
 
@@ -1886,7 +1289,7 @@ too large
 
 # Practical Tensor Debugging Checklist
 
-When inspecting a tensor:
+When inspecting a tensor, ask:
 
 1. What does it represent?
 2. What does each dimension mean?
@@ -1917,22 +1320,22 @@ w
 
 # Practical Training Debugging Checklist
 
-1. Confirm prediction and target shapes exactly match the intended semantics.
-2. Watch for unintended broadcasting.
+1. Confirm prediction and target shapes.
+2. Check for unintended broadcasting.
 3. Check dtype and device compatibility.
-4. Check `requires_grad` on learnable parameters.
-5. Confirm model parameters are registered with the optimizer.
+4. Check `requires_grad` on trainable parameters.
+5. Confirm parameters belong to the optimizer.
 6. Inspect gradients after `backward()`.
-7. Verify gradients are cleared at the intended boundary.
-8. Confirm `optimizer.step()` actually changes parameters.
-9. Distinguish pre-update loss from post-update loss.
-10. Track both training and validation loss.
-11. Use a log scale when large differences hide useful behavior.
-12. Confirm validation data never contributes parameter-update gradients.
-13. Restore the recorded best checkpoint and verify its validation loss.
-14. Restart the kernel and run the notebook top-to-bottom.
-15. Record random seeds and hyperparameters.
-16. Remember that a fixed seed improves reproducibility but does not guarantee bit-identical results across all hardware, library versions, or platforms.
+7. Verify gradients are cleared at the correct boundary.
+8. Confirm `optimizer.step()` changes parameters.
+9. Distinguish pre-update and post-update loss.
+10. Track both training and validation curves.
+11. Use log scales when large ranges hide behavior.
+12. Ensure validation data never supplies training gradients.
+13. Restore and verify the best checkpoint.
+14. Restart the notebook kernel and run top-to-bottom.
+15. Record seeds and important hyperparameters.
+16. Remember that a seed improves reproducibility but does not guarantee identical results across every hardware/library combination.
 
 ---
 
@@ -1944,30 +1347,28 @@ w
 | Parameter | Value learned during training |
 | Hyperparameter | Training choice configured by the practitioner |
 | Forward pass | Compute predictions from inputs |
-| Loss | Scalar objective measuring model error |
+| Loss | Scalar objective measuring error |
 | Gradient | Local sensitivity of loss to a parameter |
-| Backpropagation | Efficient application of the chain rule through the computational graph |
-| Autograd | PyTorch's automatic differentiation system |
+| Backpropagation | Chain-rule-based gradient computation through a graph |
+| Autograd | PyTorch automatic differentiation |
 | Optimizer | Algorithm that converts gradients into parameter updates |
 | Learning rate | Controls update step size |
 | Epoch | One pass through the training dataset |
-| Batch | Subset of examples used for one training step |
-| Momentum | Decaying optimizer memory of previous update direction |
-| Validation set | Held-out data used to evaluate generalization |
+| Batch | Subset used for one training step |
+| Momentum | Decaying optimizer memory of previous directions |
+| Validation set | Held-out data used to estimate generalization |
 | Overfitting | Training improves while unseen performance deteriorates |
-| Underfitting | Model cannot adequately fit even the training structure |
-| Regularization | Techniques that constrain or alter training to improve generalization |
+| Underfitting | Model cannot adequately fit the training structure |
+| Regularization | Techniques used to constrain training or improve generalization |
 | Early stopping | Stop when validation performance no longer improves |
 | Weight decay | Parameter shrinkage used as regularization |
-| Model capacity | Flexibility of the model to represent functions |
+| Model capacity | Flexibility of the model |
 | Generalization | Performance on unseen data |
-| Checkpoint | Saved model state at a particular training point |
+| Checkpoint | Saved model state |
 
 ---
 
 # Final Mental Model
-
-The entire module can be compressed into:
 
 ```text
 data
@@ -1999,6 +1400,6 @@ generalization analysis
 regularization / model selection
 ```
 
-The most important lesson is:
+The most important lesson from Module 1 is:
 
 > **Training a model is not just minimizing training loss. It is learning parameters that generalize to the behavior and data we actually care about.**
