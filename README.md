@@ -2,18 +2,56 @@
 
 > **From first principles to modern LLM fine-tuning.**
 
-A hands-on lab for understanding how models actually learn — starting with gradients and optimization, then progressing through neural networks, language modeling, Transformers, fine-tuning, LoRA, quantization, and evaluation.
+![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-MPS-EE4C2C?logo=pytorch&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Apple%20Silicon-000000?logo=apple&logoColor=white)
+![Progress](https://img.shields.io/badge/Current-Module%2001-2ea44f)
+![Approach](https://img.shields.io/badge/Approach-First%20Principles-6f42c1)
 
-The goal is to **understand before abstracting**: implement core ideas directly, inspect what happens during training, deliberately break things, and only then introduce higher-level frameworks.
+A hands-on model-training lab for understanding how models actually learn.
+
+The progression starts with **tensors, loss functions, gradients, optimization, and generalization**, then moves toward language modeling, Transformers, full fine-tuning, supervised fine-tuning, LoRA, quantization, and rigorous LLM evaluation.
+
+The guiding principle is simple:
+
+> **Understand before abstracting.**
+
+Rather than starting with high-level training APIs, each important concept is first implemented, inspected, measured, and deliberately stressed before introducing the abstraction that automates it.
 
 ---
 
 ## 🧭 Roadmap
 
+```text
+Training fundamentals
+        ↓
+Neural networks & optimization
+        ↓
+Language modeling
+        ↓
+Self-attention
+        ↓
+Transformer / GPT from scratch
+        ↓
+Pretrained models
+        ↓
+Full fine-tuning
+        ↓
+Supervised fine-tuning
+        ↓
+LoRA / PEFT
+        ↓
+Quantization / QLoRA
+        ↓
+Evaluation
+        ↓
+LLM + retrieval/search systems
+```
+
 | Module | Focus | Status |
-|---|---|---|
-| `00` | Environment, PyTorch, Apple MPS, reproducibility | ✅ Complete |
-| `01` | Training fundamentals from first principles | 🚧 In progress |
+|:---:|---|:---:|
+| `00` | Environment, PyTorch, Apple MPS & reproducibility | ✅ Complete |
+| `01` | Training fundamentals from first principles | 🚧 **In progress** |
 | `02` | Neural networks, optimization & generalization | ⏳ Planned |
 | `03` | Language modeling & next-token prediction | ⏳ Planned |
 | `04` | Transformer / GPT from scratch | ⏳ Planned |
@@ -24,11 +62,13 @@ The goal is to **understand before abstracting**: implement core ideas directly,
 | `09` | Evaluation & error analysis | ⏳ Planned |
 | `10` | LLM + retrieval/search capstone | ⏳ Planned |
 
-The roadmap may evolve as experiments reveal useful directions to investigate.
+The roadmap will evolve as experiments expose useful questions worth investigating further.
 
 ---
 
-## 🔬 Learning Approach
+## 🔬 Experiment-Driven Approach
+
+Each meaningful experiment follows roughly the same loop:
 
 ```text
 Question
@@ -43,25 +83,30 @@ Visualize
    ↓
 Explain
    ↓
-Change one variable
+Break or modify one assumption
    ↓
 Repeat
 ```
 
-Each experiment is designed around a concrete question rather than simply running a training script.
+The goal is not simply to make training succeed.
 
-Examples:
+The goal is to understand **why it succeeds, why it fails, and what the model is actually doing**.
+
+Questions explored throughout the project include:
 
 - What does a gradient actually tell us?
-- Why does learning rate affect convergence?
-- Why can validation loss increase while training loss decreases?
-- What happens when gradients are not reset?
+- Why does gradient descent reduce loss?
+- What happens when the learning rate is too large?
+- What happens when it is too small?
+- Why can training loss fall while validation loss rises?
+- What happens if gradients are not cleared?
+- What changes when parameters are frozen?
 - Why does next-token prediction produce a language model?
 - Why does causal self-attention require masking?
 - What changes during full fine-tuning?
-- What exactly changes during LoRA fine-tuning?
-- Does a larger LoRA rank always help?
-- Why is lower training loss not necessarily a better model?
+- How can LoRA modify model behavior while training only a small fraction of parameters?
+- Does a larger LoRA rank always improve results?
+- Why can a lower training loss still produce a worse language model?
 - How should model quality be evaluated beyond loss?
 
 ---
@@ -70,7 +115,7 @@ Examples:
 
 ### 1. Understand before abstracting
 
-Start with:
+Start by understanding:
 
 ```text
 forward
@@ -86,13 +131,13 @@ before relying on:
 trainer.train()
 ```
 
-The objective is to understand what the abstraction is hiding.
+The abstraction is useful only after understanding what it hides.
 
 ---
 
 ### 2. Inspect what the model is doing
 
-Training experiments should expose things like:
+Training experiments should expose things such as:
 
 ```text
 tensor shapes
@@ -111,68 +156,65 @@ A training pipeline should not feel like a black box.
 
 ### 3. Break things intentionally
 
-Useful experiments include:
+Failure modes are part of the curriculum.
+
+Experiments will deliberately include:
 
 ```text
 learning rate too high
 learning rate too low
-missing gradient reset
+gradients not cleared
 tiny dataset overfitting
 frozen parameters
-different model capacity
 different batch sizes
+different model capacities
 different dataset sizes
 different LoRA ranks
 ```
 
-Failure modes are part of the curriculum.
+A successful default configuration often teaches less than a controlled failure.
 
 ---
 
-### 4. Measure, don't assume
+### 4. Measure rather than assume
 
-Training loss alone is not enough.
+Training success should be supported by evidence.
 
-As the project progresses, experiments will include:
+As the project progresses, experiments will examine:
 
 ```text
 training loss
 validation loss
 task metrics
+parameter changes
+gradient behavior
 generation quality
-error analysis
+error categories
 memory usage
 latency
-parameter counts
 held-out evaluation sets
 ```
-
-The goal is to understand whether a model actually improved, not simply whether optimization succeeded.
 
 ---
 
 ### 5. Keep tensor shapes explicit
 
-Examples:
+A tensor such as:
 
 ```text
-Linear regression:
-[examples, features]
-
-Neural network:
-[batch, features]
-
-Language model:
-[batch, sequence]
-
-Transformer hidden state:
-[batch, sequence, hidden_dim]
-
-Attention:
-[batch, heads, sequence, sequence]
+[8, 12, 512, 512]
 ```
 
-Shape reasoning becomes increasingly important as models get more complex.
+is not useful until the dimensions have meaning:
+
+```text
+batch
+× attention heads
+× query positions
+× key positions
+```
+
+Tensor-shape reasoning is treated as a core ML engineering skill throughout the project.
 
 ---
 
@@ -184,30 +226,111 @@ Important experiments should be recoverable from:
 code
 configuration
 random seeds
-dataset version
-model version
+dataset versions
+model versions
 metrics
 documented assumptions
 ```
 
 ---
 
-## ⚙️ Current Environment
+### 7. Training loss is not the final objective
 
-Initial development environment:
+The eventual question is not:
+
+> Did optimization reduce the training loss?
+
+It is:
+
+> Did the model improve on the behavior we actually care about?
+
+That distinction becomes increasingly important during fine-tuning and LLM evaluation.
+
+---
+
+## 🚧 Current Focus
+
+### Module 01 — Training From First Principles
+
+The first training problem is intentionally small:
+
+\[
+y = 3x + 2 + \epsilon
+\]
+
+with a model:
+
+\[
+\hat{y} = wx + b
+\]
+
+The objective is to observe the entire learning process directly:
 
 ```text
-Apple Silicon M3
-16 GB unified memory
-Python 3.12
-PyTorch
-Apple MPS
-VS Code
-Jupyter
-Git
+data
+  ↓
+forward pass
+  ↓
+prediction
+  ↓
+loss
+  ↓
+gradient
+  ↓
+parameter update
+  ↓
+repeat
 ```
 
-Verified accelerator path:
+Current progress:
+
+- [x] Python environment
+- [x] PyTorch installation
+- [x] Apple MPS verification
+- [x] Git/GitHub setup
+- [x] Tensor fundamentals
+- [ ] Manual linear regression
+- [ ] Computational graphs
+- [ ] Manual gradient derivation
+- [ ] Autograd verification
+- [ ] Gradient descent
+- [ ] Learning-rate experiments
+- [ ] Gradient accumulation
+- [ ] `nn.Module`
+- [ ] SGD
+- [ ] Momentum
+- [ ] Adam / AdamW
+- [ ] Train / validation split
+- [ ] Overfitting & generalization
+
+---
+
+## 🧩 Module 00 — Environment & Reproducibility
+
+The initial setup establishes a reproducible local training environment:
+
+```text
+Python
+   ↓
+virtual environment
+   ↓
+PyTorch
+   ↓
+MPS
+   ↓
+Apple GPU
+```
+
+The system check verifies:
+
+- Python runtime
+- PyTorch version
+- MPS availability
+- accelerator selection
+- tensor allocation
+- matrix multiplication on the accelerator
+
+Verified compute path:
 
 ```text
 PyTorch
@@ -223,252 +346,71 @@ The project intentionally starts locally before introducing cloud GPUs.
 
 ---
 
-## 🛠️ Tooling Progression
+## 📐 Tensor Fundamentals
 
-Tools are introduced only when there is a concrete reason to use them.
+A tensor is an n-dimensional numerical array.
 
-```text
-Python / NumPy
-        ↓
-PyTorch
-        ↓
-Jupyter + matplotlib
-        ↓
-Hugging Face Datasets
-        ↓
-Transformers
-        ↓
-PEFT / LoRA
-        ↓
-TRL
-        ↓
-MLX / MLX-LM
-        ↓
-Experiment tracking
-        ↓
-LLM evaluation tooling
-```
-
-### Core training
-
-- Python
-- NumPy
-- PyTorch
-- Jupyter
-- matplotlib
-
-### Models and datasets
-
-- Hugging Face Hub
-- Transformers
-- Datasets
-- Tokenizers
-
-### LLM post-training
-
-- PEFT
-- LoRA
-- TRL
-- quantization tooling
-
-### Apple Silicon
-
-- MLX
-- MLX-LM
-
-### Experiment tracking
-
-- TensorBoard
-- MLflow
-- Weights & Biases
-
-### Evaluation
-
-- held-out evaluation sets
-- task-specific metrics
-- standardized language-model evaluation tooling
-- error analysis
-
-### Engineering workflow
-
-- Git
-- GitHub
-- virtual environments
-- structured configs
-- checkpoints
-- artifacts
-- reproducible runs
-
-Public datasets and widely used open-source models will be preferred where practical.
-
----
-
-## 📁 Repository Structure
-
-Current structure:
+A useful mental model:
 
 ```text
-model-training-lab/
-│
-├── README.md
-├── requirements.txt
-│
-├── module00_setup/
-│   ├── system_check.py
-│   └── notes.md
-│
-├── module01_training_fundamentals/
-│   ├── 01_manual_linear_regression.ipynb
-│   └── notes.md
-│
-├── data/
-├── outputs/
-└── checkpoints/
+Tensor
+├── values
+├── shape
+├── dtype
+├── device
+└── autograd metadata
 ```
 
-As experiments become more realistic, the repository will evolve toward:
+Important properties:
+
+```python
+tensor.shape
+tensor.ndim
+tensor.dtype
+tensor.device
+tensor.requires_grad
+```
+
+When inspecting a tensor, ask:
 
 ```text
-configs/
-src/
-scripts/
-notebooks/
-evals/
+1. What does it represent?
+2. What does each dimension mean?
+3. What is its shape?
+4. What dtype is it?
+5. Which device is it on?
+6. Does it require gradients?
 ```
 
-Notebooks are primarily used for:
+Example:
 
 ```text
-exploration
-visualization
-interactive analysis
-small controlled experiments
+x
+→ input data
+→ [100 examples, 1 feature]
+→ float32
+→ CPU initially
+→ gradients not required
+
+w
+→ learnable parameter
+→ [1, 1]
+→ float32
+→ CPU initially
+→ gradients required
 ```
 
-Reusable training, evaluation, and data-processing logic will gradually move into Python modules and scripts.
+A useful debugging rule:
 
----
+> **Never look at a tensor shape without also asking what each dimension represents.**
 
-## 🧩 Module 00 — Environment & Reproducibility
-
-Goal:
-
-```text
-Python
-→ virtual environment
-→ PyTorch
-→ MPS
-→ Apple GPU
-```
-
-The environment includes a reproducible system check that verifies tensor allocation and matrix multiplication on the Apple GPU.
-
-Example compute path:
-
-```text
-Python 3.12
-   ↓
-project .venv
-   ↓
-PyTorch
-   ↓
-MPS
-   ↓
-mps:0
-```
-
-This creates a clean baseline before training experiments begin.
-
----
-
-## 🚧 Module 01 — Training From First Principles
-
-Starting problem:
-
-\[
-y = 3x + 2 + \epsilon
-\]
-
-Model:
-
-\[
-\hat{y} = wx + b
-\]
-
-Objective:
-
-```text
-prediction
-   ↓
-loss
-   ↓
-gradient
-   ↓
-parameter update
-   ↓
-better prediction
-```
-
-The first implementation intentionally avoids high-level training abstractions.
-
-Topics include:
-
-```text
-features and targets
-parameters vs hyperparameters
-mean squared error
-computational graphs
-automatic differentiation
-gradients
-gradient descent
-learning rate
-gradient accumulation
-optimization stability
-train vs validation behavior
-generalization
-```
-
-The goal is to observe directly how parameters move toward values that reduce loss.
-
----
-
-## 📉 Optimization Experiments
-
-A major focus of the early modules is understanding optimization behavior experimentally.
-
-Examples:
-
-```text
-reasonable learning rate
-→ stable convergence
-
-very small learning rate
-→ slow progress
-
-very large learning rate
-→ overshooting / instability
-
-gradients not cleared
-→ unintended accumulation
-```
-
-Later experiments will compare:
-
-```text
-manual gradient descent
-SGD
-Momentum
-Adam
-AdamW
-learning-rate schedules
-weight decay
-```
+Detailed tensor notes live inside the Module 01 documentation.
 
 ---
 
 ## 🧮 From a Tiny Model to an LLM
 
-The same basic training loop appears throughout the project.
+The same fundamental training structure appears throughout the project.
 
 At the beginning:
 
@@ -502,9 +444,9 @@ backpropagation
 parameter update
 ```
 
-The scale becomes dramatically larger, but the underlying optimization structure remains recognizable.
+The models become dramatically larger, but the underlying optimization problem remains recognizable.
 
-At a high level, training can be viewed as:
+At a high level:
 
 \[
 \theta^*
@@ -523,13 +465,98 @@ where:
 - \(y_i\) is a target
 - \(L\) is the loss function
 
-Understanding this continuity is one of the main goals of the lab.
+Understanding this continuity is one of the central goals of the project.
 
 ---
 
-## 🔤 Language Modeling Path
+## 📉 Optimization Experiments
 
-The language-modeling portion will progress through:
+Early modules explore optimization directly.
+
+Examples:
+
+```text
+reasonable learning rate
+→ stable convergence
+
+very small learning rate
+→ correct direction, very slow progress
+
+very large learning rate
+→ overshooting / instability / divergence
+
+gradients not cleared
+→ unintended accumulation
+```
+
+Later comparisons will include:
+
+```text
+manual gradient descent
+        ↓
+SGD
+        ↓
+Momentum
+        ↓
+Adam
+        ↓
+AdamW
+        ↓
+learning-rate schedules
+```
+
+Related topics include:
+
+- initialization
+- gradient magnitude
+- weight decay
+- regularization
+- batch size
+- gradient accumulation
+- optimization stability
+- convergence
+
+---
+
+## 🧠 Neural Networks
+
+After basic optimization, the project moves from:
+
+```text
+single linear model
+```
+
+to:
+
+```text
+linear layers
+     ↓
+nonlinear activations
+     ↓
+multiple layers
+     ↓
+learned representations
+```
+
+Topics include:
+
+- affine transformations
+- activations
+- nonlinear decision boundaries
+- initialization
+- backpropagation through multiple layers
+- vanishing and exploding gradients
+- normalization
+- regularization
+- capacity
+- bias vs variance
+- train / validation behavior
+
+---
+
+## 🔤 Language Modeling
+
+The language-modeling path introduces next-token prediction:
 
 ```text
 text
@@ -544,12 +571,12 @@ context representation
    ↓
 next-token logits
    ↓
-softmax distribution
+probability distribution
    ↓
 next-token loss
 ```
 
-Topics will include:
+Topics include:
 
 - vocabulary
 - tokenization
@@ -558,16 +585,19 @@ Topics will include:
 - logits
 - softmax
 - cross-entropy
+- maximum likelihood
 - autoregressive modeling
 - sampling
 - temperature
 - generation
 
+The objective is to connect ordinary classification concepts directly to language-model training.
+
 ---
 
 ## 🧱 Transformer From Scratch
 
-The project will eventually build a small Transformer directly.
+A small Transformer will be implemented directly before relying completely on high-level libraries.
 
 Conceptual structure:
 
@@ -594,23 +624,23 @@ Tensor shapes will be tracked explicitly.
 Example:
 
 ```text
-tokens:
+tokens
 [B, T]
 
-embeddings:
+embeddings
 [B, T, C]
 
-Q / K / V:
+Q / K / V
 [B, H, T, D]
 
-attention:
+attention
 [B, H, T, T]
 
-logits:
+logits
 [B, T, vocabulary_size]
 ```
 
-Where:
+where:
 
 ```text
 B = batch size
@@ -624,33 +654,63 @@ D = head dimension
 
 ## 🔧 Fine-Tuning Path
 
-The fine-tuning portion will compare several approaches.
-
-### Full fine-tuning
+### Full Fine-Tuning
 
 ```text
 pretrained model
       ↓
-training data
+task/domain data
       ↓
-update most/all model parameters
+update most or all parameters
 ```
 
-### LoRA
+This establishes the baseline for understanding parameter-efficient approaches.
+
+---
+
+### Supervised Fine-Tuning
+
+Instruction-style datasets will introduce:
 
 ```text
-frozen pretrained weights
-        +
-small trainable low-rank adapters
+system / user / assistant messages
+            ↓
+chat template
+            ↓
+tokenization
+            ↓
+labels
+            ↓
+causal language-model loss
 ```
 
-Conceptually:
+Topics include:
+
+- instruction data
+- chat templates
+- masking
+- causal LM loss
+- checkpointing
+- validation
+- model behavior before vs after fine-tuning
+
+---
+
+### LoRA / PEFT
+
+Rather than modifying the entire pretrained weight matrix:
+
+\[
+W
+\]
+
+LoRA models an update approximately as:
 
 \[
 W' = W + BA
 \]
 
-where the base weight \(W\) remains frozen and only the low-rank update is trained.
+where the base weights can remain frozen and the low-rank matrices are trained.
 
 Experiments will investigate:
 
@@ -658,13 +718,43 @@ Experiments will investigate:
 LoRA rank
 LoRA alpha
 target modules
+dropout
 learning rate
 dataset size
 trainable parameter count
 model quality
 ```
 
-### Quantization / QLoRA
+Questions include:
+
+> How little trainable capacity is actually needed?
+
+and:
+
+> Does increasing LoRA rank always improve performance?
+
+---
+
+## 📦 Quantization & QLoRA
+
+Quantization experiments will explore lower-precision model representations such as:
+
+```text
+FP32
+FP16
+BF16
+INT8
+INT4
+```
+
+Questions include:
+
+- How much memory is saved?
+- What accuracy tradeoffs appear?
+- Why can quantized models still be fine-tuned using adapters?
+- How does quantization change local model feasibility?
+
+Conceptually:
 
 ```text
 quantized base model
@@ -672,44 +762,41 @@ quantized base model
 trainable LoRA adapters
 ```
 
-This allows larger models to be explored within limited hardware memory.
-
 ---
 
 ## 🍎 Apple Silicon Experiments
 
-Later modules will compare PyTorch/MPS workflows with Apple-native ML tooling.
-
-Planned tools:
+Local experiments will compare approaches such as:
 
 ```text
 PyTorch + MPS
-vs
+       vs
 MLX
-vs
+       vs
 MLX-LM
 ```
 
-Topics will include:
+Topics include:
 
-```text
-unified memory
-model size
-quantization
-training memory
-inference memory
-batch size
-context length
-adapter training
-```
+- unified memory
+- model size
+- training memory
+- inference memory
+- quantization
+- context length
+- batch size
+- adapter training
+- throughput
+
+The aim is not just to make models fit, but to understand **why they fit**.
 
 ---
 
 ## 📊 Evaluation
 
-Model training and model quality are not the same thing.
+Model training and model quality are different problems.
 
-The evaluation portion will investigate:
+Evaluation work will include:
 
 ```text
 training loss
@@ -721,55 +808,219 @@ error categories
 hallucination behavior
 generalization
 catastrophic forgetting
+latency
+memory usage
 ```
 
-The goal is to avoid the assumption:
+A central question is:
 
 ```text
 lower training loss
-=
-better model
+        ≠
+automatically better model
 ```
 
-Evaluation should answer whether the model improved on the behavior we actually care about.
+Evaluation should determine whether the model improved on the behavior that actually matters.
 
 ---
 
-## 🔭 Long-Term Direction
+## 🛠️ Tooling Progression
 
-The overall progression is:
+Tools are introduced when they solve a concrete problem rather than installed up front.
 
 ```text
-training fundamentals
+Python / NumPy
         ↓
-neural networks
+PyTorch
         ↓
-optimization
+Jupyter + matplotlib
         ↓
-language modeling
+Hugging Face Datasets
         ↓
-self-attention
+Transformers
         ↓
-Transformer from scratch
+PEFT / LoRA
         ↓
-pretrained models
+TRL
         ↓
-full fine-tuning
+MLX / MLX-LM
         ↓
-supervised fine-tuning
+Experiment tracking
         ↓
-LoRA / PEFT
-        ↓
-quantization / QLoRA
-        ↓
-evaluation
-        ↓
-LLM + retrieval/search systems
+LLM evaluation tooling
 ```
+
+### Core training
+
+- Python
+- NumPy
+- PyTorch
+- Jupyter
+- matplotlib
+
+### Models & datasets
+
+Planned:
+
+- Hugging Face Hub
+- Transformers
+- Datasets
+- Tokenizers
+
+### LLM post-training
+
+Planned:
+
+- PEFT
+- LoRA
+- TRL
+- quantization tooling
+
+### Apple Silicon
+
+Planned:
+
+- MLX
+- MLX-LM
+
+### Experiment tracking
+
+Planned exposure:
+
+- TensorBoard
+- MLflow
+- Weights & Biases
+
+### Evaluation
+
+Planned:
+
+- task-specific metrics
+- held-out evaluation sets
+- standardized language-model evaluation tooling
+- structured error analysis
+
+### Engineering workflow
+
+- Git
+- GitHub
+- virtual environments
+- reproducible experiments
+- structured configs
+- checkpoints
+- artifacts
+
+Public datasets and widely used open-source models will be preferred where practical.
 
 ---
 
-## 🧪 Capstone Direction
+## 📁 Repository Structure
+
+Current structure:
+
+```text
+model-training-lab/
+│
+├── README.md
+├── requirements.txt
+│
+├── module00_setup/
+│   ├── system_check.py
+│   └── notes.md
+│
+├── module01_training_fundamentals/
+│   ├── 01_manual_linear_regression.ipynb
+│   └── notes.md
+│
+├── data/
+├── outputs/
+└── checkpoints/
+```
+
+As the experiments become more realistic, the project will evolve toward:
+
+```text
+configs/
+src/
+scripts/
+notebooks/
+evals/
+```
+
+Notebooks are primarily used for:
+
+```text
+exploration
+visualization
+interactive analysis
+controlled experiments
+```
+
+Reusable logic will gradually move into Python modules and scripts.
+
+---
+
+## 🗂️ Notebook vs Production Code
+
+Early experiments intentionally use notebooks because they make it easy to:
+
+```text
+run one step
+inspect a tensor
+change a variable
+plot the result
+form a new hypothesis
+rerun
+```
+
+As concepts become stable:
+
+```text
+notebook exploration
+        ↓
+reusable Python code
+        ↓
+config-driven experiments
+        ↓
+reproducible training pipeline
+```
+
+This mirrors the progression from research exploration toward engineering-quality training workflows.
+
+---
+
+## 🌐 Public Datasets & Models
+
+Where useful, experiments will use public datasets and open models rather than only synthetic examples.
+
+The progression is expected to include:
+
+```text
+synthetic data
+      ↓
+small public datasets
+      ↓
+language-model datasets
+      ↓
+instruction datasets
+      ↓
+domain-specific datasets
+      ↓
+held-out evaluation sets
+```
+
+Dataset selection will consider:
+
+- task relevance
+- quality
+- license
+- size
+- reproducibility
+- train / validation / test separation
+
+---
+
+## 🔭 Capstone Direction
 
 The final project is expected to combine model training with areas such as:
 
@@ -785,12 +1036,14 @@ evaluation
 ML systems
 ```
 
-Potential experiment structure:
+A potential experiment structure:
 
 ```text
 Base model
    ↓
 domain dataset
+   ↓
+baseline evaluation
    ↓
 SFT
    ↓
@@ -801,27 +1054,68 @@ quantized LoRA
 held-out evaluation
    ↓
 error analysis
+   ↓
+system-level conclusions
 ```
 
-The goal is to compare approaches rather than simply produce one fine-tuned checkpoint.
+The objective will be to **compare approaches**, not simply produce one fine-tuned checkpoint.
 
 ---
 
-## 📌 Current Focus
+## 🧪 Experiment Documentation
 
-> **Module 01 — understanding model training from first principles.**
+Meaningful experiments should capture:
 
-Current progression:
+```text
+Question
+Hypothesis
+Setup
+Variables
+Metrics
+Results
+Plots
+Failure modes
+Conclusion
+Next question
+```
+
+This repository is intended to document the reasoning behind experiments, not only their final code.
+
+---
+
+## ⚙️ Current Environment
+
+```text
+Apple Silicon M3
+16 GB unified memory
+Python 3.12
+PyTorch
+Apple MPS
+VS Code
+Jupyter
+Git
+GitHub
+```
+
+The project begins with local compute and will introduce other environments only when they serve a specific learning objective.
+
+---
+
+## 📌 Current Status
 
 ```text
 ✅ environment setup
-✅ PyTorch + MPS verification
+✅ isolated Python environment
+✅ PyTorch installation
+✅ Apple MPS verification
 ✅ Git repository setup
+✅ public GitHub repository
+✅ tensor fundamentals
 🚧 manual linear regression
 ⏳ autograd exploration
+⏳ gradient verification
 ⏳ learning-rate experiments
-⏳ PyTorch nn.Module
-⏳ optimizer comparison
+⏳ optimizer comparisons
 ```
 
 ---
@@ -833,6 +1127,8 @@ Current progression:
 > **Measure rather than assume.**
 
 > **Break things intentionally.**
+
+> **Make tensor shapes explicit.**
 
 > **Training loss is not the final objective.**
 
