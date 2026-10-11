@@ -51,8 +51,8 @@ LLM + retrieval/search systems
 | Module | Focus | Status |
 |:---:|---|:---:|
 | `00` | Environment, PyTorch, Apple MPS & reproducibility | ✅ Complete |
-| `01` | Training fundamentals from first principles | 🚧 **In progress** |
-| `02` | Neural networks, optimization & generalization | ⏳ Planned |
+| `01` | Training fundamentals from first principles | ✅ Complete |
+| `02` | Neural networks, optimization & generalization | ⏭️ Next / Planned |
 | `03` | Language modeling & next-token prediction | ⏳ Planned |
 | `04` | Transformer / GPT from scratch | ⏳ Planned |
 | `05` | Pretrained models & full fine-tuning | ⏳ Planned |
@@ -254,15 +254,15 @@ That distinction becomes increasingly important during fine-tuning and LLM evalu
 
 The first training problem is intentionally small:
 
-\[
+$$
 y = 3x + 2 + \epsilon
-\]
+$$
 
 with a model:
 
-\[
+$$
 \hat{y} = wx + b
-\]
+$$
 
 The objective is to observe the entire learning process directly:
 
@@ -282,26 +282,26 @@ parameter update
 repeat
 ```
 
-Current progress:
+Module 1 completed:
 
 - [x] Python environment
 - [x] PyTorch installation
 - [x] Apple MPS verification
 - [x] Git/GitHub setup
 - [x] Tensor fundamentals
-- [ ] Manual linear regression
-- [ ] Computational graphs
-- [ ] Manual gradient derivation
-- [ ] Autograd verification
-- [ ] Gradient descent
-- [ ] Learning-rate experiments
-- [ ] Gradient accumulation
-- [ ] `nn.Module`
-- [ ] SGD
-- [ ] Momentum
-- [ ] Adam / AdamW
-- [ ] Train / validation split
-- [ ] Overfitting & generalization
+- [x] Manual linear regression
+- [x] Computational graphs
+- [x] Manual gradient derivation
+- [x] Autograd verification
+- [x] Gradient descent
+- [x] Learning-rate experiments
+- [x] Gradient accumulation
+- [x] `nn.Module`
+- [x] SGD
+- [x] Momentum
+- [x] Adam / AdamW
+- [x] Train / validation split
+- [x] Overfitting & generalization
 
 ---
 
@@ -448,22 +448,22 @@ The models become dramatically larger, but the underlying optimization problem r
 
 At a high level:
 
-\[
+$$
 \theta^*
 =
 \arg\min_{\theta}
 \frac{1}{N}
 \sum_{i=1}^{N}
 L(f_{\theta}(x_i), y_i)
-\]
+$$
 
 where:
 
-- \(\theta\) represents model parameters
-- \(f_{\theta}\) is the model
-- \(x_i\) is an input
-- \(y_i\) is a target
-- \(L\) is the loss function
+- $\theta$ represents model parameters
+- $f_{\theta}$ is the model
+- $x_i$ is an input
+- $y_i$ is a target
+- $L$ is the loss function
 
 Understanding this continuity is one of the central goals of the project.
 
@@ -700,15 +700,15 @@ Topics include:
 
 Rather than modifying the entire pretrained weight matrix:
 
-\[
+$$
 W
-\]
+$$
 
 LoRA models an update approximately as:
 
-\[
+$$
 W' = W + BA
-\]
+$$
 
 where the base weights can remain frozen and the low-rank matrices are trained.
 
@@ -1111,11 +1111,13 @@ The project begins with local compute and will introduce other environments only
 ✅ Git repository setup
 ✅ public GitHub repository
 ✅ tensor fundamentals
-🚧 manual linear regression
-⏳ autograd exploration
-⏳ gradient verification
-⏳ learning-rate experiments
-⏳ optimizer comparisons
+✅ manual linear regression
+✅ autograd exploration
+✅ gradient verification
+✅ learning-rate experiments
+✅ optimizer comparisons
+✅ validation, overfitting & regularization
+⏭️ Module 02 — Next / Planned
 ```
 
 ---
