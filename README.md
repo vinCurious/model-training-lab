@@ -1,29 +1,49 @@
 # Model Training Lab
 
-> From first principles to modern LLM training and fine-tuning.
+> From first principles to modern LLM training and post-training.
 
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)
 ![PyTorch](https://img.shields.io/badge/PyTorch-MPS-EE4C2C?logo=pytorch&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Apple%20Silicon-000000?logo=apple&logoColor=white)
-![Progress](https://img.shields.io/badge/Current-Module%2003-2ea44f)
+![Progress](https://img.shields.io/badge/Current-Module%2004-2ea44f)
 
-A hands-on study of how machine-learning models are trained, starting with gradients and optimization and progressing toward language models, Transformers, fine-tuning, parameter-efficient training, quantization, and evaluation.
+A hands-on model-training laboratory that starts with gradients and optimization, builds language modeling and Transformers from first principles, and then moves into modern LLM fine-tuning, parameter-efficient training, quantization, and evaluation.
 
-The emphasis is on understanding the mechanics behind the abstractions:
+The goal is not to treat deep-learning libraries as black boxes.
 
 > **Build it, inspect it, break it, measure it, then abstract it.**
 
 ---
 
-## Roadmap
+## What This Repository Explores
+
+The project progresses through four layers:
+
+```text
+training mechanics
+↓
+neural-network trainability
+↓
+language modeling & Transformers
+↓
+modern LLM post-training
+```
+
+Experiments begin with deliberately small models where every tensor, gradient, and failure mode can be inspected.
+
+Higher-level libraries and real pretrained models are introduced only after the underlying mechanics are understood.
+
+---
+
+## Progress
 
 | Module | Focus | Status |
 |:---:|---|:---:|
 | `00` | Environment, PyTorch, MPS & reproducibility | ✅ |
 | `01` | Training fundamentals from first principles | ✅ |
 | `02` | Neural networks & deep-network trainability | ✅ |
-| `03` | Language modeling & next-token prediction | ⏳ Current |
-| `04` | Transformer / GPT from scratch | Planned |
+| `03` | Language modeling & next-token prediction | ✅ |
+| `04` | Transformer / GPT from scratch | 🚧 Current |
 | `05` | Pretrained models & full fine-tuning | Planned |
 | `06` | Supervised fine-tuning (SFT) | Planned |
 | `07` | LoRA & parameter-efficient fine-tuning | Planned |
@@ -31,72 +51,66 @@ The emphasis is on understanding the mechanics behind the abstractions:
 | `09` | Evaluation & error analysis | Planned |
 | `10` | End-to-end model-training capstone | Planned |
 
-Search, retrieval, ranking, and RAG experiments are intentionally kept outside this repository so this project remains focused on **model training and post-training**.
+---
+
+## Representative Experiments
+
+Rather than only implementing the successful path, the notebooks intentionally create failure cases and inspect what happens.
+
+| Experiment | Observation |
+|---|---|
+| Learning-rate sweep | A sufficiently large learning rate caused catastrophic divergence |
+| Gradient accumulation | Forgetting to clear gradients changed the optimization behavior dramatically |
+| Model capacity | Larger models reduced training loss but did not automatically generalize better |
+| Tiny initialization | Deep ReLU activations and gradients collapsed |
+| Large initialization | Activations, loss, and gradients exploded |
+| `tanh` saturation | Saturation was visible without forcing a simplistic vanishing-gradient conclusion |
+| Residual-only network | More parameters and residual connections did not automatically improve training |
+| PreNorm residual network | Normalization + residual structure produced strong, stable optimization |
+| Ambiguous next-token context | The model learned an approximately `50/50` conditional distribution |
+| Autoregressive generation | Low training loss did not prevent degradation on model-generated contexts |
+| Temperature scaling | Changed decoding sharpness without changing the trained model |
+
+The goal is to preserve counterexamples rather than hide them when an experiment does not match a textbook narrative.
 
 ---
 
-## Completed Work
+## Experimental Method
 
-### Module 01 — Training Fundamentals
-
-Built the training loop from first principles and explored:
-
-- tensors, parameters, and computational graphs
-- manual gradient derivation vs PyTorch autograd
-- gradient descent and learning-rate failure modes
-- gradient accumulation
-- SGD, momentum, Adam, and AdamW
-- train/validation splits
-- overfitting, model capacity, early stopping, and weight decay
-
-The experiments move from a manually trained linear model to PyTorch abstractions while keeping the underlying mechanics explicit.
-
-### Module 02 — Neural Networks
-
-Extended the same ideas to deeper neural networks:
-
-- linear models vs nonlinear function approximation
-- ReLU and learned hidden representations
-- tensor shapes through multilayer networks
-- vanishing and exploding activations/gradients
-- He/Kaiming and Xavier/Glorot initialization
-- `tanh` saturation
-- LayerNorm
-- residual connections
-- PreNorm residual blocks
-- gradient-flow diagnostics during training
-
-Several experiments intentionally use poor initialization or architecture choices to make failure modes observable before introducing techniques that address them.
-
----
-
-## Experimental Approach
-
-Experiments generally follow:
+Most experiments follow the same loop:
 
 ```text
 question
-→ hypothesis
-→ minimal experiment
-→ measure
-→ visualize
-→ interpret
-→ modify one assumption
-→ repeat
+↓
+hypothesis
+↓
+minimal implementation
+↓
+measure
+↓
+inspect
+↓
+break an assumption
+↓
+measure again
+↓
+interpret
 ```
 
-Training success is not judged by loss alone. Depending on the experiment, the repository examines:
+Depending on the experiment, measurements include:
 
 - training and validation loss
 - tensor shapes
 - activation statistics
 - gradient magnitudes
 - parameter counts
+- optimization trajectories
+- learned probability distributions
+- generated outputs
 - generalization behavior
-- model outputs
 - memory and compute requirements
 
-Notebook outputs are intentionally retained when they form part of the experimental result.
+Notebook outputs are retained when they form part of the experimental evidence.
 
 ---
 
@@ -122,50 +136,194 @@ model-training-lab/
 │   ├── 03_training_deeper_networks.ipynb
 │   └── notes.md
 │
+├── module03_language_modeling/
+│   ├── 01_tokens_embeddings_and_context.ipynb
+│   ├── 02_next_token_prediction.ipynb
+│   ├── 03_generation_and_sampling.ipynb
+│   └── notes.md
+│
 ├── data/
 ├── outputs/
 └── checkpoints/
 ```
 
-Notebooks contain the experiment narrative, code, plots, and measured results.
+Notebooks contain the experiment narrative, implementation, measurements, and interpretation.
 
-Each module's `notes.md` serves as a compact reference for the concepts introduced in that module.
+Each module's `notes.md` is a compact technical reference rather than a duplicate of the notebook.
 
-As the project progresses, reusable training and evaluation logic will move from notebooks into Python modules and scripts where appropriate.
+As the project grows, reusable training and evaluation logic will move into Python modules and scripts where that abstraction becomes useful.
+
+---
+
+## Tooling & ML Ecosystem
+
+The project begins with minimal dependencies and introduces production and research tooling as the experiments require it.
+
+### Core
+
+- Python
+- PyTorch
+- Jupyter
+- NumPy
+- matplotlib
+- Apple MPS
+
+### Models, datasets & post-training
+
+Later modules will use the Hugging Face ecosystem for real model-training workflows:
+
+- **Datasets** — loading, preprocessing, and working with public datasets
+- **Transformers** — pretrained model architectures and checkpoints
+- **PEFT** — LoRA and parameter-efficient fine-tuning
+- **TRL** — post-training workflows where appropriate
+- **Hugging Face Hub** — publishing models, checkpoints, metadata, and model cards
+
+The progression will intentionally move from:
+
+```text
+implement the mechanism ourselves
+↓
+understand its behavior
+↓
+use the standard library abstraction
+```
+
+rather than starting with high-level training APIs.
+
+### Apple Silicon
+
+For experiments where it is useful, the project will also explore:
+
+- MLX
+- MLX-LM
+
+particularly for efficient local inference and fine-tuning on Apple Silicon.
+
+### Experiment tracking & evaluation
+
+As experiments become larger, the repository will introduce tooling such as:
+
+- TensorBoard
+- MLflow
+- Weights & Biases where useful
+- `lm-eval-harness` or equivalent evaluation tooling
+
+The goal is to move beyond manually reading notebook loss values toward reproducible experiment comparison.
+
+---
+
+## Data
+
+Early experiments use synthetic or deliberately tiny datasets because controlled data makes optimization behavior easy to inspect.
+
+Later modules will transition to real public datasets and benchmarks.
+
+Sources may include:
+
+- Hugging Face Datasets
+- canonical datasets released with papers
+- public benchmark datasets
+- task-specific open datasets
+
+Dataset provenance, preprocessing decisions, train/validation/test splits, and evaluation methodology will be recorded as part of the experiment.
+
+Large datasets and model checkpoints will not be committed directly to Git.
+
+---
+
+## Research Workflow
+
+The later stages of the project will increasingly resemble a small research workflow:
+
+```text
+paper / technique
+↓
+understand the core idea
+↓
+build a minimal implementation
+↓
+reproduce expected behavior
+↓
+run controlled variations
+↓
+evaluate
+↓
+document conclusions
+```
+
+Primary sources such as papers, technical reports, arXiv, and OpenReview will be preferred when studying model architectures or training techniques.
+
+The emphasis is on distinguishing:
+
+```text
+what the paper claims
+what the implementation does
+what the experiment actually shows
+```
+
+---
+
+## Reproducibility
+
+Experiments aim to make assumptions visible:
+
+- random seeds are set when reproducibility matters
+- tensor dimensions are kept explicit
+- important hyperparameters are recorded
+- training and validation behavior are both inspected
+- important notebook outputs are committed
+- checkpoints and large generated artifacts remain outside Git
+
+A result should be understandable without relying on hidden notebook state.
 
 ---
 
 ## Environment
 
-Current experiments are designed to run locally on Apple Silicon using:
+Current experiments are designed to run locally on Apple Silicon.
 
-- Python 3.12
-- PyTorch
-- Apple MPS
-- Jupyter
-- matplotlib
+```text
+Python 3.12
+PyTorch
+MPS
+Jupyter
+```
 
-The project starts with local compute and introduces larger models or additional infrastructure only when required by the experiment.
+The project deliberately starts with local compute.
+
+Cloud GPUs will be introduced only when model size or training cost makes local execution impractical, and experiments requiring paid compute will be identified explicitly.
 
 ---
 
-## Next
+## Current Work
 
-**Module 03 — Language Modeling**
+### Module 04 — Transformer / GPT From Scratch
 
-The next stage moves from scalar and vector prediction to sequences:
+The next step replaces the fixed flattened-context representation from Module 03 with token-to-token interaction.
+
+The progression will be approximately:
 
 ```text
-text
-→ tokens
-→ embeddings
-→ context
-→ next-token logits
-→ cross-entropy loss
-→ generation
+token embeddings
+↓
+queries, keys, values
+↓
+scaled dot-product attention
+↓
+causal masking
+↓
+multi-head attention
+↓
+Transformer block
+↓
+decoder-only language model
+↓
+training
+↓
+autoregressive generation
 ```
 
-The goal is to understand next-token prediction from first principles before building a Transformer.
+The objective is to understand why the Transformer architecture solves limitations that were directly observable in the simpler language model.
 
 ---
 
@@ -179,4 +337,8 @@ The goal is to understand next-token prediction from first principles before bui
 
 **Keep tensor shapes explicit.**
 
+**Preserve unexpected results.**
+
 **Training loss is not the final objective.**
+
+**Use abstractions after understanding what they abstract.**
